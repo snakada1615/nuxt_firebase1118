@@ -24,13 +24,9 @@
     >
       Submit
     </button>
-    <button
-      type="button"
-      @click="getData"
-    >
-      getchData
-    </button>
-    <p>{{ dbData }}</p>
+    <ul>
+      <li :key="item.key" v-for="item in dbData">{{item}}</li>
+    </ul>
   </div>
 </template>
 
@@ -38,17 +34,30 @@
   import firebase from '@/plugins/firebase'
 
   export default {
-    data () {
+    data() {
       return {
         user: {
           name: "",
           email: ""
         },
-        dbData: "",
+        dbData: [],
       }
     },
+    mounted() {
+      const db = firebase.firestore()
+      db
+        .collection('users')
+        .get()
+        .then(snap => {
+          const dbData = [];
+          snap.forEach(doc => {
+            dbData.push({[doc.id]: doc.data()});
+          });
+          this.dbData = dbData;
+        });
+    },
     methods: {
-      submit () {
+      submit() {
         const db = firebase.firestore()
         let dbUsers = db.collection('users')
         dbUsers
@@ -60,17 +69,13 @@
             console.log('Add ID: ', ref.id)
           })
       },
-      getData () {
-        const db = firebase.firestore()
-        let docUsers = db.collection('users').doc('8Ner2tNFSFmXYq3hDYck')
-        let dbData = []
-        this.dbData = dbData
-        docUsers
-          .get()
-          .then(function(doc) {
-            dbData.push(doc.data().name)
-          })
-      },
+      getData() {
+        console.log('ok01')
+        var vue = this;
+        firebase.database().ref('users').on('value', function (snapshot) {
+          vue.dbData = snapshot.val();
+        });
+      }
     },
   }
 </script>
