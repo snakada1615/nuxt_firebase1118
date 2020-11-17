@@ -20,13 +20,44 @@
     </label>
     <button
       type="button"
-      @click="submit"
+      @click="add"
     >
       Submit
     </button>
-    <ul>
-      <li :key="item.key" v-for="item in dbData">{{item}}</li>
-    </ul>
+    <b-table
+      :items="dbData"
+      :current-page="currentPage"
+      :per-page="perPage"
+      :fields="fields"
+      :sort-by="sortBy"
+      :sort-desc="sortDesc"
+      class="table-striped">
+    </b-table>
+    <b-form-group
+      label="Per page"
+      label-cols-sm="6"
+      label-cols-md="4"
+      label-cols-lg="3"
+      label-align-sm="right"
+      label-size="sm"
+      label-for="perPageSelect"
+      class="mb-0"
+    >
+      <b-form-select
+        v-model="perPage"
+        id="perPageSelect"
+        size="sm"
+        :options="pageOptions"
+      ></b-form-select>
+    </b-form-group>
+    <b-pagination
+      v-model="currentPage"
+      :total-rows="totalRows"
+      :per-page="perPage"
+      align="fill"
+      size="sm"
+      class="my-0"
+    ></b-pagination>
   </div>
 </template>
 
@@ -40,42 +71,69 @@
           name: "",
           email: ""
         },
+        fields: [
+          { key: 'id', sortable: true , filterByFormatted: true, tdClass: 'd-none', thClass: 'd-none'},
+          { key: 'name', sortable: true, filterByFormatted: true },
+          { key: 'email', sortable: true },
+        ],
         dbData: [],
+        totalRows: 1,
+        currentPage: 1,
+        perPage: 5,
+        pageOptions: [5, 10, 15, { value: 100, text: "Show a lot" }],
+        sortBy: 'Name',
+        sortDesc: false,
+        filter: null,
+        filterOn: []
       }
     },
     mounted() {
+      //
       const db = firebase.firestore()
       db
         .collection('users')
         .get()
         .then(snap => {
-          const dbData = [];
           snap.forEach(doc => {
-            dbData.push({[doc.id]: doc.data()});
-          });
-          this.dbData = dbData;
-        });
+            let tmpdat = {}
+            //this.dbData[doc.id] =doc.data()
+            this.dbData.push({
+              id: doc.id,
+              name: doc.data().name,
+              email: doc.data().email
+            })
+            //this.dbData.push({[doc.id]:doc.data()})
+          })
+        }).then( () => {
+        // Set the initial number of items
+        this.totalRows = this.dbData.length
+      });
+      console.log(this.dbData)
     },
     methods: {
-      submit() {
+      add() {
         const db = firebase.firestore()
-        let dbUsers = db.collection('users')
-        dbUsers
-          .add({
+        let dbUsers = db.collection('users').add({
             name: this.user.name,
             email: this.user.email,
           })
           .then(ref => {
-            console.log('Add ID: ', ref.id)
+            this.user.name = ''
+            this.user.email = ''
+            console.log('added -> Add ID: ', ref.id)
           })
       },
-      getData() {
-        console.log('ok01')
-        var vue = this;
-        firebase.database().ref('users').on('value', function (snapshot) {
-          vue.dbData = snapshot.val();
-        });
-      }
+      update(id) {
+        const db = firebase.firestore()
+        let dbUsers = db.ref('users/' + id)
+          .set({
+            name: this.user.name,
+            email: this.user.email,
+          })
+          .then(ref => {
+            console.log('update -> Add ID: ', ref.id)
+          })
+      },
     },
   }
 </script>
