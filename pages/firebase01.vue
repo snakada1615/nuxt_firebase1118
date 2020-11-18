@@ -24,6 +24,52 @@
     >
       Submit
     </button>
+
+    <b-form-group
+      label="Filter"
+      label-cols-sm="3"
+      label-align-sm="right"
+      label-size="sm"
+      label-for="filterInput"
+      class="mb-0"
+    >
+      <b-input-group size="sm">
+        <b-form-input
+          v-model="filter"
+          type="search"
+          id="filterInput"
+          placeholder="Type to Search"
+        ></b-form-input>
+        <b-input-group-append>
+          <b-button :disabled="!filter" @click="filter = ''">Clear</b-button>
+        </b-input-group-append>
+      </b-input-group>
+<!--
+      <b-dropdown
+        text="Dropdown"
+        variant="success"
+        v-model="filter"
+        type="search"
+        id="filterInput"
+      >
+        <b-dropdown-item>Action A</b-dropdown-item>
+        <b-dropdown-item>Action B</b-dropdown-item>
+      </b-dropdown>
+-->
+    </b-form-group>
+    <b-form-group
+      label="Filter On"
+      label-cols-sm="3"
+      label-align-sm="right"
+      label-size="sm"
+      description="Leave all unchecked to filter on all data"
+      class="mb-0">
+      <b-form-checkbox-group v-model="filterOn" class="mt-1">
+        <b-form-checkbox value="name">Name</b-form-checkbox>
+        <b-form-checkbox value="email">email</b-form-checkbox>
+      </b-form-checkbox-group>
+    </b-form-group>
+
     <b-table
       :items="dbData"
       :current-page="currentPage"
@@ -31,6 +77,9 @@
       :fields="fields"
       :sort-by="sortBy"
       :sort-desc="sortDesc"
+      :filter="filter"
+      :filter-included-fields="filterOn"
+      @filtered="onFiltered"
       class="table-striped">
     </b-table>
     <b-form-group
@@ -134,6 +183,11 @@
             console.log('update -> Add ID: ', ref.id)
           })
       },
+      onFiltered(filteredItems) {
+        // Trigger pagination to update the number of buttons/pages due to filtering
+        this.totalRows = filteredItems.length
+        this.currentPage = 1
+      }
     },
   }
 </script>
